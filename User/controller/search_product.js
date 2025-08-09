@@ -99,3 +99,22 @@ export async function handleSearch(req, res, rawQuery = "") {
     res.status(500).json({ error: "Server error" });
   }
 }
+
+
+
+
+export const trending = async (req, res) => {
+  try {
+    const [products] = await db.query(
+      `SELECT * FROM products WHERE rank > 3 ORDER BY RAND() LIMIT 10`
+    );
+
+    res.status(200).json({
+      success: true,
+      data: products,
+    });
+  } catch (error) {
+    console.error("Trending fetch error:", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};

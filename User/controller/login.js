@@ -27,7 +27,7 @@ export const loginUser = async(emailOrPhone, password) => {
     { expiresIn: '1h' }
   );
 
-  PostRecentactivities(user.id,"Logged In")
+  PostRecentactivities(user.id,"Last Logged In","login")
 
   return {
     status: 200,
@@ -35,7 +35,6 @@ export const loginUser = async(emailOrPhone, password) => {
     message: 'Login successful',
     token,
     user: {
-      id: user.id,
       name: user.name,
       email: user.email,
       phone: user.phone

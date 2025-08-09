@@ -1,10 +1,11 @@
 import { db } from "../../db.js";
 
 export const checkLoginStatus = async (req, res) => {
+  const user = req.user
   try {
     const [rows] = await db.query(
-      "SELECT name, email, phone FROM users WHERE id = ?",
-      [req.user.id]
+      "SELECT name, email, phone FROM users WHERE email = ? ",
+      [user.email]
     );
 
     if (rows.length === 0) {

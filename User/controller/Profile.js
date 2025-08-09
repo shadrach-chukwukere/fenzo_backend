@@ -2,12 +2,13 @@
 
 import { db } from "../../db.js";
 import jwt from 'jsonwebtoken';
+import { compress } from "lzma";
 import bcrypt from 'bcrypt';
 import {PostRecentactivities} from '../controller/Activities.js'
 
 export const updateUserProfile =  async (req, res) => {
   const userId = req.user.id;
-  const { name, image = '' } = req.body;
+  const { name, image } = req.body;
 
   if (!name ) {
     return res.status(400).json({ success: false, message: "All feilds are required" });
@@ -27,7 +28,7 @@ export const updateUserProfile =  async (req, res) => {
     );
 
     res.status(200).json({ success: true, message: "User updated successfully" });
-    PostRecentactivities(userId,"Updated Profile")
+    PostRecentactivities(userId,"Updated Your Profile","profile")
   } catch (err) {
     console.error("Update error:", err);
     res.status(500).json({ success: false, message: err });
@@ -62,9 +63,14 @@ export const changePassword = async (req, res) => {
     await db.query('UPDATE users SET password = ? WHERE id = ?', [hashed, userId]);
 
     res.status(200).json({ success: true, message: "Password updated successfully." });
-    PostRecentactivities(userId,"Changed Password")
+    PostRecentactivities(userId,"Changed LogIn Password","password")
   } catch (err) {
     console.error("Password update error:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 }
+
+
+
+
+

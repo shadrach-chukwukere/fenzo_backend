@@ -17,7 +17,6 @@ export async function handleSignup(req, res) {
   try {
     const [test] = await db.query("SELECT 1");
     if (email) {
-      console.log("Checking existing email...");
       const [existing] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
       if (existing.length > 0) {
         return res.status(409).json({ success: false, message: 'Email already exists' });
@@ -25,7 +24,6 @@ export async function handleSignup(req, res) {
     }
 
     if (phone) {
-      console.log("Checking existing phone...");
       const [existingPhone] = await db.query('SELECT * FROM users WHERE phone = ?', [phone]);
       if (existingPhone.length > 0) {
         return res.status(409).json({ success: false, message: 'Phone number already exists' });
@@ -39,7 +37,6 @@ export async function handleSignup(req, res) {
       [name, email || null, hashedPassword, phone || ""]
     );
 
-    console.log("Signup successful");
     res.status(201).json({ success: true, message: 'Signup successful' });
   } catch (err) {
     console.error('Signup error:', err);
