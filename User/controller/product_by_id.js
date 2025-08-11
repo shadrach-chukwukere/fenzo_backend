@@ -11,7 +11,7 @@ export async function product_by_id(req, res) {
   }
 
   try {
-    const [rows] = await db.query('SELECT * FROM products WHERE id = ?', [id]);
+    const [rows] = await db.query('SELECT brand , title , category , description , id , img1 , img2 , img3 , color , stock , size , rank , price FROM products WHERE id = ?', [id]);
 
     if (rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Product not found' });

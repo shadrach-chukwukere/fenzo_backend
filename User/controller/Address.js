@@ -9,7 +9,7 @@ export const getAddress = async (req, res) => {
       "SELECT id, address_line, city, state FROM address WHERE user_id = ?",
       [id]
     );
-    res.json({ success: true, email, address: addresses });
+    res.json({ success: true, address: addresses });
   } catch (err) {
     console.error(err);
     res

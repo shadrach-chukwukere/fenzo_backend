@@ -1,10 +1,11 @@
 // controllers/cartController.js
-import { db } from '../../db.js';
+import { db } from "../../db.js";
 
 export async function getCart(req, res) {
   const userId = req.user.id;
   try {
-    const [rows] = await db.query(`
+    const [rows] = await db.query(
+      `
       SELECT 
         ci.id AS cart_item_id,
         ci.quantity,
@@ -18,7 +19,9 @@ export async function getCart(req, res) {
       FROM cart_items ci
       JOIN products p ON ci.product_id = p.id
       WHERE ci.user_id = ?
-    `, [userId]);
+    `,
+      [userId]
+    );
 
     res.json({ success: true, cart: rows });
   } catch (err) {
@@ -30,55 +33,74 @@ export async function getCart(req, res) {
 export async function clearCart(req, res) {
   try {
     const userId = req.user.id;
-    await db.query('DELETE FROM cart_items WHERE user_id = ?', [userId]);
-    res.json({ success: true, message: 'Cart cleared successfully' });
+    await db.query("DELETE FROM cart_items WHERE user_id = ?", [userId]);
+    res.json({ success: true, message: "Cart cleared successfully" });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 }
 
 export async function addToCart(req, res) {
   const userId = req.user.id;
-  const { productId, quantity, size = '', color = '' } = req.body;
+  const { productId, quantity, size = "", color = "" } = req.body;
   if (!productId || !quantity)
-    return res.status(400).json({ message: 'Product ID and quantity are required' });
+    return res
+      .status(400)
+      .json({ message: "Product ID and quantity are required" });
 
   try {
     const [existing] = await db.query(
-      'SELECT * FROM cart_items WHERE user_id = ? AND product_id = ? AND size = ? AND color = ?',
+      "SELECT * FROM cart_items WHERE user_id = ? AND product_id = ? AND size = ? AND color = ?",
       [userId, productId, size, color]
     );
+    const [enough] = await db.query("SELECT stock from products WHERE id = ?", [
+      productId,
+    ]);
+    console.log(existing, enough[0].stock);
+
     if (existing.length > 0) {
       await db.query(
-        'UPDATE cart_items SET quantity = quantity + ? WHERE user_id = ? AND product_id = ? AND size = ? AND color = ?',
+        "UPDATE cart_items SET quantity = quantity + ? WHERE user_id = ? AND product_id = ? AND size = ? AND color = ?",
         [quantity, userId, productId, size, color]
       );
-    } else {
+    } else if (enough[0].stock !== 0) {
       await db.query(
-        'INSERT INTO cart_items (user_id, product_id, quantity, size, color) VALUES (?, ?, ?, ?, ?)',
+        "INSERT INTO cart_items (user_id, product_id, quantity, size, color) VALUES (?, ?, ?, ?, ?)",
         [userId, productId, quantity, size, color]
       );
+      res
+        .status(200)
+        .json({ success: true, message: "Added to cart successfully" });
+    } else {
+      res
+        .status(404)
+        .json({ success: false, message: "This Product is Out of Stock" });
     }
-
-    res.status(200).json({ success: true, message: 'Added to cart successfully' });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to add to cart' });
+    res.status(500).json({ success: false, message: "Failed to add to cart" });
   }
 }
 
 export async function updateCart(req, res) {
-  const { productId, quantity, size = '', color = '' } = req.body;
+  const { productId, quantity, size = "", color = "" } = req.body;
   const userId = req.user?.id;
 
   if (!userId || !productId || !quantity) {
-    return res.status(400).json({ success: false, message: "Missing required fields" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing required fields" });
   }
 
   try {
     // Step 1: Get product stock
-    const [productRows] = await db.query(`SELECT stock FROM products WHERE id = ?`, [productId]);
+    const [productRows] = await db.query(
+      `SELECT stock FROM products WHERE id = ?`,
+      [productId]
+    );
     if (productRows.length === 0) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
     }
 
     const availableStock = productRows[0].stock;
@@ -112,41 +134,53 @@ export async function updateCart(req, res) {
       SET quantity = ? 
       WHERE user_id = ? AND product_id = ? AND size = ? AND color = ?
     `;
-    const [result] = await db.query(updateQuery, [quantity, userId, productId, size, color]);
+    const [result] = await db.query(updateQuery, [
+      quantity,
+      userId,
+      productId,
+      size,
+      color,
+    ]);
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: "Item not found in cart" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Item not found in cart" });
     }
 
-    return res.status(200).json({ success: true, message: "Cart updated successfully" });
+    return res
+      .status(200)
+      .json({ success: true, message: "Cart updated successfully" });
   } catch (err) {
     console.error("Update cart error:", err);
     return res.status(500).json({ success: false, message: "Database error" });
   }
 }
 
-
-
 export async function removeFromCart(req, res) {
   const userId = req.user.id;
-  const { productId, size = '', color = '' } = req.body;
+  const { productId, size = "", color = "" } = req.body;
 
   if (!productId)
-    return res.status(400).json({ success: false, message: 'Product ID is required' });
+    return res
+      .status(400)
+      .json({ success: false, message: "Product ID is required" });
 
   try {
     const [result] = await db.query(
-      'DELETE FROM cart_items WHERE user_id = ? AND product_id = ? AND size = ? AND color = ?',
+      "DELETE FROM cart_items WHERE user_id = ? AND product_id = ? AND size = ? AND color = ?",
       [userId, productId, size, color]
     );
 
     if (result.affectedRows > 0) {
-      return res.json({ success: true, message: 'Item removed from cart' });
+      return res.json({ success: true, message: "Item removed from cart" });
     } else {
-      return res.status(404).json({ success: false, message: 'Item not found in cart' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Item not found in cart" });
     }
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to remove item' });
+    res.status(500).json({ success: false, message: "Failed to remove item" });
   }
 }
 
@@ -155,16 +189,19 @@ export async function hasInCart(req, res) {
   const productId = req.query.product_id;
 
   if (!productId)
-    return res.status(400).json({ message: 'Product ID is required' });
+    return res.status(400).json({ message: "Product ID is required" });
 
   try {
     const [rows] = await db.query(
-      'SELECT * FROM cart_items WHERE user_id = ? AND product_id = ?',
+      "SELECT * FROM cart_items WHERE user_id = ? AND product_id = ?",
       [userId, productId]
     );
 
-    res.json({ is_cart: rows.length > 0 ? "yes" : "no", quantity: rows[0]?.quantity ?? 0 });
+    res.json({
+      is_cart: rows.length > 0 ? "yes" : "no",
+      quantity: rows[0]?.quantity ?? 0,
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to check cart status' });
+    res.status(500).json({ message: "Failed to check cart status" });
   }
 }

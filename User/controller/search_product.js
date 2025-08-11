@@ -41,10 +41,8 @@ export async function handleSearch(req, res, rawQuery = "") {
     const hasFilters = filters.length > 0;
 
     if (!query && !hasFilters) {
-      // No query and no filters: return up to 100 random products
       sql = `SELECT * FROM products ORDER BY RAND() LIMIT 100`;
     } else if (!query) {
-      // Only filters, no query
       const isOnlyCategoryFilter =
         hasCategory && !hasBrand && !hasColor && !hasSize;
 
@@ -56,7 +54,6 @@ export async function handleSearch(req, res, rawQuery = "") {
         finalValues = [...values];
       }
     } else {
-      // Query + optional filters
       const likeQuery = `%${query}%`;
 
       sql = `
@@ -75,7 +72,6 @@ export async function handleSearch(req, res, rawQuery = "") {
           SELECT id FROM products WHERE LOWER(description) LIKE ?
         ) ${filterClause}
       `;
-
 
       finalValues = [
         likeQuery,
@@ -99,9 +95,6 @@ export async function handleSearch(req, res, rawQuery = "") {
     res.status(500).json({ error: "Server error" });
   }
 }
-
-
-
 
 export const trending = async (req, res) => {
   try {
