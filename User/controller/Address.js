@@ -19,7 +19,7 @@ export const getAddress = async (req, res) => {
 };
 
 export const postAddress = async (req, res) => {
-  const id = req.user.id; // ✅ fixed
+  const id = req.user.id; 
   const { address_line, city, state } = req.body;
 
   if (!address_line || !city || !state) {

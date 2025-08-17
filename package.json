@@ -28,6 +28,7 @@
     "node-fetch": "^3.3.2",
     "nodemailer": "^7.0.5",
     "path": "^0.12.7",
+    "react": "^19.1.1",
     "sequelize": "^6.37.7",
     "sharp": "^0.34.3",
     "sqlite3": "^5.1.7"

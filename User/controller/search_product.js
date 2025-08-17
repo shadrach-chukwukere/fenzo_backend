@@ -98,8 +98,12 @@ export async function handleSearch(req, res, rawQuery = "") {
 
 export const trending = async (req, res) => {
   try {
+    // Get rank value from query params or default to 3
+    const minRank = parseInt(req.query.rank, 10) || 3;
+
     const [products] = await db.query(
-      `SELECT * FROM products WHERE rank > 3 ORDER BY RAND() LIMIT 10`
+      `SELECT * FROM products WHERE rank > ? ORDER BY RAND() LIMIT 10`,
+      [minRank]
     );
 
     res.status(200).json({

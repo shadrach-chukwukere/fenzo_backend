@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import path from "path";
 import { fileURLToPath } from "url";
-
+import { useEffect } from "react";
 
 // Fix __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -37,12 +37,7 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-// ======================= Multer (Upload) =======================
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "user/assets"),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
-});
-const upload = multer({ storage });
+
 
 // ======================= Controllers =======================
 import { handleSearch, trending } from "./User/controller/search_product.js";
@@ -51,8 +46,8 @@ import {
   postTestimony,
 } from "./User/controller/Testimonial.js";
 import { handleSignup } from "./User/controller/signup.js";
-import uploadImage from "./User/controller/image_multer.js";
 import { getAllStats } from "./Admin/controller/total.js";
+import { RecoverAccount } from "./User/controller/Recovery.js";
 import { getBanners } from "./User/controller/banner.js";
 import { sendMail } from "./User/controller/mailer.js";
 import { checkUserExists } from "./User/controller/check_user_exist.js";
@@ -64,6 +59,7 @@ import {
   deleteAddress,
 } from "./User/controller/Address.js";
 import { loginUser } from "./User/controller/login.js";
+import { Functions } from "./play.js";
 import { checkLoginStatus } from "./User/controller/IsLoggedIn.js";
 import {
   updateUserProfile,
@@ -102,9 +98,8 @@ app.get("/api/getAddress", verifyToken, getAddress);
 app.post("/api/postAddress", verifyToken, postAddress);
 app.put("/api/editAddress/:id", verifyToken, editAddress);
 app.delete("/api/deleteAddress/:id", verifyToken, deleteAddress);
+app.post("/api/reset",RecoverAccount)
 
-// Upload
-app.post("/upload", upload.single("image"), uploadImage);
 
 // Products
 app.get("/api/trends", trending);
@@ -141,6 +136,8 @@ app.get("/api/cart/has", verifyToken, hasInCart);
 //   text: "Your OTP is: 123456",
 //   html: "<p>Your OTP is: <b>123456</b></p>",
 // });
+
+app.get("/api/play",Functions)
 
 // ======================= Start Server =======================
 app.listen(PORT, "0.0.0.0", () => {
