@@ -28,7 +28,7 @@ export const loginUser = async (emailOrPhone, password) => {
     return { status: 401, success: false, message: "Incorrect password" };
   }
 
-  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
+  const token = jwt.sign(user, JWT_SECRET, {
     expiresIn: "1h",
   });
 
@@ -42,7 +42,8 @@ export const loginUser = async (emailOrPhone, password) => {
     user: {
       // Use the uploaded file URL if exists
       image: user.profile_image ? `${BASE_URL}${user.profile_image}` : null,
-      name: user.name,
+      firstname: user.firstname,
+      lastname: user.lastname,
       email: user.email,
       phone: user.phone,
     },

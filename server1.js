@@ -37,8 +37,6 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-
-
 // ======================= Controllers =======================
 import { handleSearch, trending } from "./User/controller/search_product.js";
 import {
@@ -90,16 +88,33 @@ app.post("/api/login", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, "User/assets"));
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage });
+
 app.get("/api/is-logged-in", verifyToken, checkLoginStatus);
-app.put("/api/user/update", verifyToken, updateUserProfile);
+app.put(
+  "/api/user/update",
+  upload.single("image"),
+  verifyToken,
+  updateUserProfile
+);
+
 app.put("/api/user/update-password", verifyToken, changePassword);
 app.post("/api/checkUserExists", checkUserExists);
 app.get("/api/getAddress", verifyToken, getAddress);
 app.post("/api/postAddress", verifyToken, postAddress);
 app.put("/api/editAddress/:id", verifyToken, editAddress);
 app.delete("/api/deleteAddress/:id", verifyToken, deleteAddress);
-app.post("/api/reset",RecoverAccount)
-
+app.post("/api/reset", RecoverAccount);
 
 // Products
 app.get("/api/trends", trending);
@@ -137,7 +152,7 @@ app.get("/api/cart/has", verifyToken, hasInCart);
 //   html: "<p>Your OTP is: <b>123456</b></p>",
 // });
 
-app.get("/api/play",Functions)
+app.get("/api/play", Functions);
 
 // ======================= Start Server =======================
 app.listen(PORT, "0.0.0.0", () => {

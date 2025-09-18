@@ -19,7 +19,7 @@ export const verifyToken = (req, res, next) => {
       return res.status(403).json({ message: 'Forbidden: Invalid or expired token' });
     }
 
-    req.user = decoded; // This should include `id`
+    req.user = decoded;
     next();
   });
 };

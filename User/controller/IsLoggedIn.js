@@ -4,7 +4,7 @@ export const checkLoginStatus = async (req, res) => {
   const user = req.user
   try {
     const [rows] = await db.query(
-      "SELECT name, email, phone FROM users WHERE email = ? ",
+      "SELECT firstname, email, phone FROM users WHERE email = ? ",
       [user.email]
     );
 
