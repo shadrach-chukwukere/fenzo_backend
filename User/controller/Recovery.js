@@ -1,19 +1,29 @@
+import { link } from "fs";
 import { db } from "../../db.js";
+import { createResetToken } from "./createToken.js";
+
 export const RecoverAccount = async (req, res) => {
   const { email } = req.body;
+
   try {
-    const [row] = await db.query("SELECT name FROM users WHERE email = ?", [
-      email,
-    ]);
-    if (row.length > 0) {
-      res.status(200).json({ message: row[0]?.name, status: true });
-      return true;
+    const [rows] = await db.query(
+      "SELECT firstname FROM users WHERE email = ?",
+      [email]
+    );
+
+    const link = await createResetToken(email);
+
+    if (rows.length > 0) {
+      res
+        .status(200)
+        .json({ message: rows[0].firstname, status: true, link: link });
     } else {
-      res.status(404).json({message:"not found",status:false});
-      return false;
+      res.status(404).json({ message: "Account not found.", status: false });
     }
   } catch (err) {
-    res.status(404);
-    return false;
+    console.error("Database error during account recovery:", err);
+    res
+      .status(500)
+      .json({ message: "An internal server error occurred.", status: false });
   }
 };

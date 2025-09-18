@@ -5,6 +5,7 @@ export const db = mysql.createPool({
   user: 'root',
   password: '',
   database: 'shop_db',
+  waitForConnections:true,
 });
 
 db.getConnection()

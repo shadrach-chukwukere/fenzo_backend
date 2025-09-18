@@ -65,6 +65,7 @@ import {
 } from "./User/controller/Profile.js";
 import { product_by_id } from "./User/controller/product_by_id.js";
 import { getRecentactivities } from "./User/controller/Activities.js";
+import { resetPassword } from "./User/controller/reset-password.js";
 import {
   getCart,
   clearCart,
@@ -115,6 +116,7 @@ app.post("/api/postAddress", verifyToken, postAddress);
 app.put("/api/editAddress/:id", verifyToken, editAddress);
 app.delete("/api/deleteAddress/:id", verifyToken, deleteAddress);
 app.post("/api/reset", RecoverAccount);
+app.put("/api/resetPassword", resetPassword);
 
 // Products
 app.get("/api/trends", trending);
