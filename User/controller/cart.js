@@ -56,7 +56,6 @@ export async function addToCart(req, res) {
     const [enough] = await db.query("SELECT stock from products WHERE id = ?", [
       productId,
     ]);
-    console.log(existing, enough[0].stock);
 
     if (existing.length > 0) {
       await db.query(

@@ -32,7 +32,7 @@ export const login = async (formData, setIsLoading) => {
 
     // Get human-readable address
     const address = await getAddressFromCoords(lat, lon);
-    console.log("User Address:", address);
+
 
     // Send login data along with address
     const payload = {
