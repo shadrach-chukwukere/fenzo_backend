@@ -1,6 +1,6 @@
 import { db } from "../../db.js";
 
-// 🔹 Helper function to fetch a user's cart
+// 🔹 Helper: Fetch user's cart
 async function fetchCart(userId) {
   const [rows] = await db.query(
     `
@@ -32,7 +32,7 @@ export async function getCart(req, res) {
     const cart = await fetchCart(userId);
     res.json({ success: true, cart });
   } catch (err) {
-    console.error("Cart fetch error:", err);
+    console.error("Cart fetch error:", err.message);
     res.status(500).json({ success: false, message: "Database error" });
   }
 }
@@ -47,7 +47,7 @@ export async function clearCart(req, res) {
     const cart = await fetchCart(userId);
     res.json({ success: true, message: "Cart cleared successfully", cart });
   } catch (err) {
-    console.error("Clear cart error:", err);
+    console.error("Clear cart error:", err.message);
     res.status(500).json({ success: false, message: "Server error" });
   }
 }
@@ -65,13 +65,10 @@ export async function addToCart(req, res) {
       "SELECT id FROM cart_items WHERE user_id = ? AND product_id = ? AND size = ? AND color = ?",
       [userId, productId, size, color]
     );
-    const [stockRow] = await db.query("SELECT stock FROM products WHERE id = ?", [
-      productId,
-    ]);
 
-    if (!stockRow.length) {
+    const [stockRow] = await db.query("SELECT stock FROM products WHERE id = ?", [productId]);
+    if (!stockRow.length)
       return res.status(404).json({ success: false, message: "Product not found" });
-    }
 
     if (existing.length > 0) {
       await db.query(
@@ -84,67 +81,50 @@ export async function addToCart(req, res) {
         [userId, productId, quantity, size, color]
       );
     } else {
-      return res
-        .status(400)
-        .json({ success: false, message: "This product is out of stock" });
+      return res.status(400).json({ success: false, message: "This product is out of stock" });
     }
 
     const cart = await fetchCart(userId);
     res.status(200).json({ success: true, message: "Added to cart successfully", cart });
   } catch (err) {
-    console.error("Add to cart error:", err);
+    console.error("Add to cart error:", err.message);
     res.status(500).json({ success: false, message: "Failed to add to cart" });
   }
 }
 
 // 🔹 Update cart
 export async function updateCart(req, res) {
-  const { productId, quantity, size = "", color = "" } = req.body;
   const userId = req.user?.id;
+  const { productId, quantity, size = "", color = "" } = req.body;
 
-  if (!userId || !productId || !quantity) {
+  if (!userId || !productId || !quantity)
     return res.status(400).json({ success: false, message: "Missing required fields" });
-  }
 
   try {
-    const [productRows] = await db.query(`SELECT stock FROM products WHERE id = ?`, [
-      productId,
-    ]);
-    if (productRows.length === 0) {
+    const [productRows] = await db.query("SELECT stock FROM products WHERE id = ?", [productId]);
+    if (!productRows.length)
       return res.status(404).json({ success: false, message: "Product not found" });
-    }
 
     const availableStock = productRows[0].stock;
-
-    if (quantity > availableStock) {
+    if (quantity > availableStock)
       return res.status(400).json({
         success: false,
         message: `Only ${availableStock} item(s) are available in stock`,
       });
-    }
 
     const [result] = await db.query(
-      `
-      UPDATE cart_items 
-      SET quantity = ? 
-      WHERE user_id = ? AND product_id = ? AND size = ? AND color = ?
-    `,
+      "UPDATE cart_items SET quantity = ? WHERE user_id = ? AND product_id = ? AND size = ? AND color = ?",
       [quantity, userId, productId, size, color]
     );
 
-    if (result.affectedRows === 0) {
+    if (result.affectedRows === 0)
       return res.status(404).json({ success: false, message: "Item not found in cart" });
-    }
 
     const cart = await fetchCart(userId);
-    return res.status(200).json({
-      success: true,
-      message: "Cart updated successfully",
-      cart,
-    });
+    res.status(200).json({ success: true, message: "Cart updated successfully", cart });
   } catch (err) {
-    console.error("Update cart error:", err);
-    return res.status(500).json({ success: false, message: "Database error" });
+    console.error("Update cart error:", err.message);
+    res.status(500).json({ success: false, message: "Database error" });
   }
 }
 
@@ -162,19 +142,20 @@ export async function removeFromCart(req, res) {
       [userId, productId, size, color]
     );
 
+    const cart = await fetchCart(userId);
+
     if (result.affectedRows > 0) {
-      const cart = await fetchCart(userId);
       return res.json({ success: true, message: "Item removed from cart", cart });
     } else {
-      return res.status(404).json({ success: false, message: "Item not found in cart" });
+      return res.status(404).json({ success: false, message: "Item not found in cart", cart });
     }
   } catch (err) {
-    console.error("Remove cart error:", err);
+    console.error("Remove cart error:", err.message);
     res.status(500).json({ success: false, message: "Failed to remove item" });
   }
 }
 
-// 🔹 Check if product in cart
+// 🔹 Check if product is in cart
 export async function hasInCart(req, res) {
   const userId = req.user?.id;
   const productId = req.query.product_id;
@@ -193,7 +174,7 @@ export async function hasInCart(req, res) {
       quantity: rows[0]?.quantity ?? 0,
     });
   } catch (err) {
-    console.error("Has in cart error:", err);
+    console.error("Has in cart error:", err.message);
     res.status(500).json({ message: "Failed to check cart status" });
   }
 }

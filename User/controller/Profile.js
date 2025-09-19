@@ -1,23 +1,19 @@
-// controllers/userController.js
 import { db } from "../../db.js";
 import bcrypt from "bcrypt";
 import { PostRecentactivities } from "../controller/Activities.js";
 
-// UPDATE PROFILE (only name)
+// 🔹 UPDATE PROFILE (name & optional profile image)
 export const updateUserProfile = async (req, res) => {
   try {
     const { firstname, lastname } = req.body;
     const user = req.user;
 
+
     if (!firstname) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Firstname is required" });
+      return res.status(400).json({ success: false, message: "Firstname is required" });
     }
 
-    const imagePath = req.file
-      ? `/assets/${req.file.filename}`
-      : user?.profile_image;
+    const imagePath = req.file ? `/assets/${req.file.filename}` : user?.profile_image;
 
     await db.query(
       "UPDATE users SET firstname = ?, lastname = ?, profile_image = ? WHERE id = ?",
@@ -28,6 +24,7 @@ export const updateUserProfile = async (req, res) => {
 
     return res.json({
       success: true,
+      message: "Profile updated successfully",
       user: {
         image: imagePath,
         firstname,
@@ -35,17 +32,16 @@ export const updateUserProfile = async (req, res) => {
         email: user?.email,
         phone: user?.phone,
       },
-      message: "Profile updated successfully",
     });
   } catch (err) {
-    console.error("Profile update error:", err);
+    console.error("Profile update error:", err.message);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// CHANGE PASSWORD
+// 🔹 CHANGE PASSWORD
 export const changePassword = async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user?.id;
   const { currentPassword, newPassword } = req.body;
 
   if (!currentPassword || !newPassword) {
@@ -56,36 +52,24 @@ export const changePassword = async (req, res) => {
   }
 
   try {
-    const [users] = await db.query("SELECT * FROM users WHERE id = ?", [
-      userId,
-    ]);
-    if (users.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
+    const [users] = await db.query("SELECT password FROM users WHERE id = ?", [userId]);
+    if (!users.length) {
+      return res.status(404).json({ success: false, message: "User not found." });
     }
 
-    const user = users[0];
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    const isMatch = await bcrypt.compare(currentPassword, users[0].password);
     if (!isMatch) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Current password is incorrect." });
+      return res.status(401).json({ success: false, message: "Current password is incorrect." });
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
-    await db.query("UPDATE users SET password = ? WHERE id = ?", [
-      hashed,
-      userId,
-    ]);
+    await db.query("UPDATE users SET password = ? WHERE id = ?", [hashed, userId]);
 
     PostRecentactivities(userId, "Changed LogIn Password", "password");
 
-    res
-      .status(200)
-      .json({ success: true, message: "Password updated successfully." });
+    return res.status(200).json({ success: true, message: "Password updated successfully." });
   } catch (err) {
-    console.error("Password update error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Password update error:", err.message);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
