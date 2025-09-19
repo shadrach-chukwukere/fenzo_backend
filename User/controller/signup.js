@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import { db } from "../../db.js";
+import { generateUniqueUsername } from "./username.js";
 
 export async function handleSignup(req, res) {
   const { firstname, lastname, email, password, phone } = req.body;
@@ -28,20 +29,34 @@ export async function handleSignup(req, res) {
 
     if (existing.length > 0) {
       if (existing[0].email === email) {
-        return res.status(409).json({ success: false, message: "Email Address Already Exist" });
+        return res
+          .status(409)
+          .json({ success: false, message: "Email Address Already Exist" });
       }
       if (existing[0].phone === phone) {
-        return res.status(409).json({ success: false, message: "Phone Number Already Exist" });
+        return res
+          .status(409)
+          .json({ success: false, message: "Phone Number Already Exist" });
       }
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const username = await generateUniqueUsername(firstname,lastname);
+    console.log(username)
+
     // Insert user
     await db.query(
-      "INSERT INTO users (firstname, lastname, email, password, phone) VALUES (?, ?, ?, ?, ?)",
-      [firstname, lastname, email || null, hashedPassword, phone || null]
+      "INSERT INTO users (firstname, lastname, email, password, phone , username) VALUES (?, ?, ?, ?, ?, ?)",
+      [
+        firstname,
+        lastname,
+        email || null,
+        hashedPassword,
+        phone || null,
+        username || null,
+      ]
     );
 
     res.status(201).json({ success: true, message: "Signup successful" });

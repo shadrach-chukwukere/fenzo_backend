@@ -53,6 +53,7 @@ export const loginUser = async (emailOrPhone, password) => {
         lastname: user.lastname,
         email: user.email,
         phone: user.phone,
+        username: user.username,
       },
     };
   } catch (err) {
