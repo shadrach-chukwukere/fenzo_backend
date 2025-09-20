@@ -50,6 +50,7 @@ import { getBanners } from "./User/controller/banner.js";
 import { sendMail } from "./User/controller/mailer.js";
 import { checkUserExists } from "./User/controller/check_user_exist.js";
 import { suscribe } from "./User/controller/subscribe.js";
+import { getOrdersByUser } from "./User/controller/Orders.js";
 import {
   getAddress,
   postAddress,
@@ -74,6 +75,7 @@ import {
   removeFromCart,
   hasInCart,
 } from "./User/controller/cart.js";
+import { stations } from "./User/controller/stations.js";
 
 // ======================= Routes =======================
 
@@ -126,6 +128,7 @@ app.get("/api/search/:query", (req, res) =>
 app.get("/api/search", (req, res) => handleSearch(req, res, ""));
 app.get("/api/product/:id", product_by_id);
 app.get("/api/banners", getBanners);
+app.get("/api/orders", verifyToken, getOrdersByUser);
 
 // Testimonials
 app.get("/api/testimonies", getTestimonies);
@@ -134,6 +137,8 @@ app.post("/api/testimonies_post", postTestimony);
 // Activities & Stats
 app.get("/api/recentActivities", verifyToken, getRecentactivities);
 app.get("/api/stats", getAllStats);
+
+app.get("/api/stations", stations);
 
 // Newsletter
 app.post("/api/subscribe", suscribe);
