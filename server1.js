@@ -50,7 +50,7 @@ import { getBanners } from "./User/controller/banner.js";
 import { sendMail } from "./User/controller/mailer.js";
 import { checkUserExists } from "./User/controller/check_user_exist.js";
 import { suscribe } from "./User/controller/subscribe.js";
-import { getOrdersByUser } from "./User/controller/Orders.js";
+import { getOrdersByUser, getOrderDetails } from "./User/controller/Orders.js"
 import {
   getAddress,
   postAddress,
@@ -66,6 +66,7 @@ import {
 } from "./User/controller/Profile.js";
 import { product_by_id } from "./User/controller/product_by_id.js";
 import { getRecentactivities } from "./User/controller/Activities.js";
+import { checkOut } from "./User/controller/checkOut.js";
 import { resetPassword } from "./User/controller/reset-password.js";
 import {
   getCart,
@@ -129,6 +130,7 @@ app.get("/api/search", (req, res) => handleSearch(req, res, ""));
 app.get("/api/product/:id", product_by_id);
 app.get("/api/banners", getBanners);
 app.get("/api/orders", verifyToken, getOrdersByUser);
+app.get("/api/order/:orderId",verifyToken,getOrderDetails)
 
 // Testimonials
 app.get("/api/testimonies", getTestimonies);
@@ -150,6 +152,7 @@ app.post("/api/cart/add", verifyToken, addToCart);
 app.put("/api/cart/update", verifyToken, updateCart);
 app.delete("/api/cart/remove", verifyToken, removeFromCart);
 app.get("/api/cart/has", verifyToken, hasInCart);
+app.post("/api/checkOut",verifyToken,checkOut)
 
 // // Example mail (testing purpose)
 // const testMail = await sendMail({
