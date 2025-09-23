@@ -77,6 +77,7 @@ import {
   hasInCart,
 } from "./User/controller/cart.js";
 import { stations } from "./User/controller/stations.js";
+import { applyDiscount, fetchDiscount, validateDiscountCode } from "./User/controller/discount.js";
 
 // ======================= Routes =======================
 
@@ -112,6 +113,15 @@ app.put(
   updateUserProfile
 );
 
+app.post("/apply-discount", async (req, res) => {
+  const { code, cartTotal } = req.body;
+  const result = await applyDiscount(code, cartTotal);
+  res.json(result);
+});
+
+
+app.get("/api/discount_codes",fetchDiscount)
+app.post("/api/validate_discount_code/:code",verifyToken,validateDiscountCode)
 app.put("/api/user/update-password", verifyToken, changePassword);
 app.post("/api/checkUserExists", checkUserExists);
 app.get("/api/getAddress", verifyToken, getAddress);

@@ -19,7 +19,7 @@ export async function postTestimony(req, res) {
 
     // fetch updated testimonies
     const [results] = await db.query(
-      "SELECT * FROM testimonies ORDER BY RAND() LIMIT 10"
+      "SELECT * FROM testimonies ORDER BY RAND() LIMIT 5"
     );
 
     res.status(201).json({
@@ -41,7 +41,7 @@ export async function getTestimonies(req, res) {
   try {
     // Use ORDER BY RAND() carefully; for large tables, consider a LIMIT with offset approach
     const [results] = await db.query(
-      "SELECT * FROM testimonies ORDER BY RAND() LIMIT 10"
+      "SELECT * FROM testimonies ORDER BY RAND() LIMIT 5"
     );
 
     res.status(200).json({ success: true, data: results });
