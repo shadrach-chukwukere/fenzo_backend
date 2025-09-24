@@ -50,7 +50,7 @@ import { getBanners } from "./User/controller/banner.js";
 import { sendMail } from "./User/controller/mailer.js";
 import { checkUserExists } from "./User/controller/check_user_exist.js";
 import { suscribe } from "./User/controller/subscribe.js";
-import { getOrdersByUser, getOrderDetails } from "./User/controller/Orders.js"
+import { getOrdersByUser, getOrderDetails } from "./User/controller/Orders.js";
 import {
   getAddress,
   postAddress,
@@ -77,7 +77,11 @@ import {
   hasInCart,
 } from "./User/controller/cart.js";
 import { stations } from "./User/controller/stations.js";
-import { applyDiscount, fetchDiscount, validateDiscountCode } from "./User/controller/discount.js";
+import {
+  applyDiscount,
+  fetchDiscount,
+  validateDiscountCode,
+} from "./User/controller/discount.js";
 
 // ======================= Routes =======================
 
@@ -119,9 +123,12 @@ app.post("/apply-discount", async (req, res) => {
   res.json(result);
 });
 
-
-app.get("/api/discount_codes",fetchDiscount)
-app.post("/api/validate_discount_code/:code",verifyToken,validateDiscountCode)
+app.get("/api/discount_codes", fetchDiscount);
+app.post(
+  "/api/validate_discount_code/:code",
+  verifyToken,
+  validateDiscountCode
+);
 app.put("/api/user/update-password", verifyToken, changePassword);
 app.post("/api/checkUserExists", checkUserExists);
 app.get("/api/getAddress", verifyToken, getAddress);
@@ -140,7 +147,7 @@ app.get("/api/search", (req, res) => handleSearch(req, res, ""));
 app.get("/api/product/:id", product_by_id);
 app.get("/api/banners", getBanners);
 app.get("/api/orders", verifyToken, getOrdersByUser);
-app.get("/api/order/:orderId",verifyToken,getOrderDetails)
+app.get("/api/order/:orderId", verifyToken, getOrderDetails);
 
 // Testimonials
 app.get("/api/testimonies", getTestimonies);
@@ -156,13 +163,13 @@ app.get("/api/stations", stations);
 app.post("/api/subscribe", suscribe);
 
 // Cart
-app.get("/api/cart", verifyToken, getCart);
+app.get("/api/cart", getCart);
 app.delete("/api/cart/clear", verifyToken, clearCart);
-app.post("/api/cart/add", verifyToken, addToCart);
-app.put("/api/cart/update", verifyToken, updateCart);
-app.delete("/api/cart/remove", verifyToken, removeFromCart);
-app.get("/api/cart/has", verifyToken, hasInCart);
-app.post("/api/checkOut",verifyToken,checkOut)
+app.post("/api/cart/add", addToCart);
+app.put("/api/cart/update", updateCart);
+app.delete("/api/cart/remove", removeFromCart);
+app.get("/api/cart/has", hasInCart);
+app.post("/api/checkOut", verifyToken, checkOut);
 
 // // Example mail (testing purpose)
 // const testMail = await sendMail({

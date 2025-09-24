@@ -25,7 +25,8 @@ async function fetchCart(userId) {
 
 // 🔹 Get cart
 export async function getCart(req, res) {
-  const userId = req.user?.id;
+  const userId = req?.user?.id;
+  if(!userId) return res.status(403).json({status:false,message:"You need to login to add to cart"})
   if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
   try {
@@ -39,7 +40,8 @@ export async function getCart(req, res) {
 
 // 🔹 Clear cart
 export async function clearCart(req, res) {
-  const userId = req.user?.id;
+  const userId = req?.user?.id;
+  if(!userId) return res.status(403).json({status:false,message:"You need to login to add to cart"})
   if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
   try {
@@ -54,7 +56,8 @@ export async function clearCart(req, res) {
 
 // 🔹 Add to cart
 export async function addToCart(req, res) {
-  const userId = req.user?.id;
+  const userId = req?.user?.id;
+  if(!userId) return res.status(403).json({status:false,message:"You need to login to add to cart"})
   const { productId, quantity, size = "", color = "" } = req.body;
 
   if (!userId || !productId || !quantity)
@@ -94,7 +97,8 @@ export async function addToCart(req, res) {
 
 // 🔹 Update cart
 export async function updateCart(req, res) {
-  const userId = req.user?.id;
+  const userId = req?.user?.id;
+  if(!userId) return res.status(403).json({status:false,message:"You need to login to add to cart"})
   const { productId, quantity, size = "", color = "" } = req.body;
 
   if (!userId || !productId || !quantity)
@@ -130,7 +134,8 @@ export async function updateCart(req, res) {
 
 // 🔹 Remove from cart
 export async function removeFromCart(req, res) {
-  const userId = req.user?.id;
+  const userId = req?.user?.id;
+  if(!userId) return res.status(403).json({status:false,message:"You need to login to add to cart"})
   const { productId, size = "", color = "" } = req.body;
 
   if (!userId || !productId)
@@ -157,7 +162,8 @@ export async function removeFromCart(req, res) {
 
 // 🔹 Check if product is in cart
 export async function hasInCart(req, res) {
-  const userId = req.user?.id;
+  const userId = req?.user?.id;
+  if(!userId) return res.status(403).json({status:false,message:"You need to login to add to cart"})
   const productId = req.query.product_id;
 
   if (!userId || !productId)
