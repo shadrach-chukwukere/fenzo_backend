@@ -2,7 +2,7 @@ import { db } from "../../db.js";
 
 export const checkOut = async (req, res) => {
   const user_id = req.user.id;
-  const { items, total_amount, address, option, payment_method, delivery_fee } =
+  const { items, total_amount, address, option, payment_method, delivery_fee , name , phone, email } =
     req.body;
 
   if (!user_id || !items || items.length === 0) {
@@ -16,10 +16,10 @@ export const checkOut = async (req, res) => {
     const [orderResult] = await db.query(
       `
       INSERT INTO orders 
-        (user_id, total_amount, address, option, payment_method, delivery_fee,status)
-      VALUES (?, ?, ?, ?, ?, ?,?)
+        (user_id, total_amount, address, option, payment_method, delivery_fee,status,name,phone,email)
+      VALUES (?, ?, ?, ?, ?, ?,?,?,?,?)
       `,
-      [user_id, total_amount, address, option, payment_method, delivery_fee,"Processing"]
+      [user_id, total_amount, address, option, payment_method, delivery_fee,"Processing",name,phone,email]
     );
 
     const orderId = orderResult.insertId;

@@ -26,7 +26,9 @@ export async function product_by_id(req, res) {
         stock,
         size,
         rank,
-        price
+        price,
+        discount_percentage,
+        discount_price
       FROM products
       WHERE id = ?
       `,

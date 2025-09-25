@@ -2,11 +2,11 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { db } from "../../db.js";
 import { PostRecentactivities } from "./Activities.js";
+import { deleteGuestAccount, mergeGuestCartToUser } from "./guest.js";
 
 const JWT_SECRET = "yourSecretKey";
-const BASE_URL = "http://localhost:5000"; // adjust if deployed
 
-export const loginUser = async (emailOrPhone, password) => {
+export const loginUser = async (emailOrPhone, password, guest_id) => {
   if (!emailOrPhone || !password) {
     return {
       status: 400,
@@ -42,6 +42,10 @@ export const loginUser = async (emailOrPhone, password) => {
     // Record recent login activity (async, no await needed)
     PostRecentactivities(user.id, "Last Logged In", "login");
 
+    const mergedCart = await mergeGuestCartToUser(user.id, guest_id);
+
+    await deleteGuestAccount(guest_id);
+
     return {
       status: 200,
       success: true,
@@ -55,6 +59,7 @@ export const loginUser = async (emailOrPhone, password) => {
         phone: user.phone,
         username: user.username,
       },
+      merged: mergedCart,
     };
   } catch (err) {
     console.error("Login error:", err.message);

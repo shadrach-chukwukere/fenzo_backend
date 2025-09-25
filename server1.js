@@ -52,6 +52,14 @@ import { checkUserExists } from "./User/controller/check_user_exist.js";
 import { suscribe } from "./User/controller/subscribe.js";
 import { getOrdersByUser, getOrderDetails } from "./User/controller/Orders.js";
 import {
+  register_guest,
+  getGuestCart,
+  addToGuestCart,
+  removeFromGuestCart,
+  updateGuestCart,
+  hasInGuestCart,
+} from "./User/controller/guest.js";
+import {
   getAddress,
   postAddress,
   editAddress,
@@ -89,8 +97,8 @@ import {
 app.post("/api/signUp", handleSignup);
 app.post("/api/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const result = await loginUser(email, password);
+    const { email, password , guest_id } = req.body;
+    const result = await loginUser(email, password,guest_id);
     res.status(result.status).json(result);
   } catch (err) {
     console.error(err);
@@ -163,13 +171,13 @@ app.get("/api/stations", stations);
 app.post("/api/subscribe", suscribe);
 
 // Cart
-app.get("/api/cart", getCart);
-app.delete("/api/cart/clear", verifyToken, clearCart);
-app.post("/api/cart/add", addToCart);
-app.put("/api/cart/update", updateCart);
-app.delete("/api/cart/remove", removeFromCart);
-app.get("/api/cart/has", hasInCart);
-app.post("/api/checkOut", verifyToken, checkOut);
+app.get("/api/cart",verifyToken, getCart);
+app.delete("/api/cart/clear",verifyToken, verifyToken, clearCart);
+app.post("/api/cart/add",verifyToken, addToCart);
+app.put("/api/cart/update",verifyToken, updateCart);
+app.delete("/api/cart/remove",verifyToken, removeFromCart);
+app.get("/api/cart/has",verifyToken, hasInCart);
+app.post("/api/checkOut",verifyToken, verifyToken, checkOut);
 
 // // Example mail (testing purpose)
 // const testMail = await sendMail({
@@ -180,6 +188,16 @@ app.post("/api/checkOut", verifyToken, checkOut);
 // });
 
 app.get("/api/play", Functions);
+
+// guest
+
+app.post("/api/guest/register-guest", register_guest);
+/* ===== Guest Cart Endpoints ===== */
+app.get("/api/guest/cart", getGuestCart); // fetch guest cart
+app.post("/api/guest/cart/add", addToGuestCart); // add item to guest cart
+app.delete("/api/guest/cart/remove", removeFromGuestCart); // remove item
+app.put("/api/guest/cart/update", updateGuestCart); // update quantity
+app.get("/api/guest/cart/has", hasInGuestCart);
 
 // ======================= Start Server =======================
 app.listen(PORT, "0.0.0.0", () => {

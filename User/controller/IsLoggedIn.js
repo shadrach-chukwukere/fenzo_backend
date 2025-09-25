@@ -3,8 +3,11 @@ import { db } from "../../db.js";
 export const checkLoginStatus = async (req, res) => {
   const user = req.user;
 
+
   if (!user?.email) {
-    return res.status(400).json({ success: false, message: "User email missing" });
+    return res
+      .status(400)
+      .json({ success: false, message: "User email missing" });
   }
 
   try {
@@ -14,7 +17,9 @@ export const checkLoginStatus = async (req, res) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     res.status(200).json({ success: true, loggedIn: true, user: rows[0] });

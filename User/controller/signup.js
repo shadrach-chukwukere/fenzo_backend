@@ -44,7 +44,6 @@ export async function handleSignup(req, res) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const username = await generateUniqueUsername(firstname,lastname);
-    console.log(username)
 
     // Insert user
     await db.query(

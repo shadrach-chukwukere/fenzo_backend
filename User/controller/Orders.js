@@ -29,7 +29,7 @@ export const getOrderDetails = async (req, res) => {
       `
       SELECT o.id as order_id, o.total_amount, o.payment_method, o.delivery_fee, o.status,
              o.address, o.option, o.created_at, o.updated_at,
-             u.id as user_id, u.firstname, u.lastname, u.email, u.phone
+             u.id as user_id, o.name, o.email, o.phone
       FROM orders o
       JOIN users u ON o.user_id = u.id
       WHERE o.id = ?
