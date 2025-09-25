@@ -77,7 +77,7 @@ export const validateDiscountCode = async (req, res) => {
         if (new Date().toISOString() >= row.expiry_date) {
           return res.json({ status: false, message: "Token Expired" });
         } else if (row.usage_limit == row.used_count) {
-          return res.json({
+          return res.status(404).json({
             status: false,
             message: "Discount code has been used up",
           });
@@ -87,13 +87,18 @@ export const validateDiscountCode = async (req, res) => {
             message: "Discount code is valid",
             description: row.description,
             value: row.discount_value,
+            code:  row.code
           });
         }
       } else {
-        return res.json({ status: false, message: "Invalid discount code" });
+        return res
+          .status(404)
+          .json({ status: false, message: "Invalid discount code" });
       }
     } else {
-      return res.json({ status: false, message: "Invalid discount code" });
+      return res
+        .status(404)
+        .json({ status: false, message: "Invalid discount code" });
     }
   } catch (err) {
     console.error(err);
