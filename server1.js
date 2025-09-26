@@ -3,10 +3,8 @@ import express from "express";
 import cors from "cors";
 import multer from "multer";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
 import path from "path";
 import { fileURLToPath } from "url";
-import { useEffect } from "react";
 
 // Fix __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -20,7 +18,7 @@ const JWT_SECRET = "yourSecretKey";
 // ======================= Middleware =======================
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
-app.use("/api/assets", express.static(path.join(__dirname, "user/assets")));
+app.use("/api/assets", express.static(path.join(__dirname, "User/assets")));
 
 // JWT Middleware
 const verifyToken = (req, res, next) => {
@@ -30,19 +28,22 @@ const verifyToken = (req, res, next) => {
   }
   const token = authHeader.split(" ")[1];
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err)
-      return res.status(403).json({ message: "Forbidden: Invalid token" });
+    if (err) return res.status(403).json({ message: "Forbidden: Invalid token" });
     req.user = user;
     next();
   });
 };
 
+// ======================= Multer =======================
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, path.join(__dirname, "User/assets")),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
+});
+const upload = multer({ storage });
+
 // ======================= Controllers =======================
 import { handleSearch, trending } from "./User/controller/search_product.js";
-import {
-  getTestimonies,
-  postTestimony,
-} from "./User/controller/Testimonial.js";
+import { getTestimonies, postTestimony } from "./User/controller/Testimonial.js";
 import { handleSignup } from "./User/controller/signup.js";
 import { getAllStats } from "./Admin/controller/total.js";
 import { RecoverAccount } from "./User/controller/Recovery.js";
@@ -59,46 +60,27 @@ import {
   updateGuestCart,
   hasInGuestCart,
 } from "./User/controller/guest.js";
-import {
-  getAddress,
-  postAddress,
-  editAddress,
-  deleteAddress,
-} from "./User/controller/Address.js";
+import { getAddress, postAddress, editAddress, deleteAddress } from "./User/controller/Address.js";
 import { loginUser } from "./User/controller/login.js";
 import { Functions } from "./play.js";
 import { checkLoginStatus } from "./User/controller/IsLoggedIn.js";
-import {
-  updateUserProfile,
-  changePassword,
-} from "./User/controller/Profile.js";
+import { updateUserProfile, changePassword } from "./User/controller/Profile.js";
 import { product_by_id } from "./User/controller/product_by_id.js";
 import { getRecentactivities } from "./User/controller/Activities.js";
 import { checkOut } from "./User/controller/checkOut.js";
 import { resetPassword } from "./User/controller/reset-password.js";
-import {
-  getCart,
-  clearCart,
-  addToCart,
-  updateCart,
-  removeFromCart,
-  hasInCart,
-} from "./User/controller/cart.js";
+import { getCart, clearCart, addToCart, updateCart, removeFromCart, hasInCart } from "./User/controller/cart.js";
 import { stations } from "./User/controller/stations.js";
-import {
-  applyDiscount,
-  fetchDiscount,
-  validateDiscountCode,
-} from "./User/controller/discount.js";
+import { applyDiscount, fetchDiscount, validateDiscountCode } from "./User/controller/discount.js";
 
 // ======================= Routes =======================
 
-// Auth & Profile
+// ---- Auth & Profile ----
 app.post("/api/signUp", handleSignup);
 app.post("/api/login", async (req, res) => {
   try {
-    const { email, password , guest_id } = req.body;
-    const result = await loginUser(email, password,guest_id);
+    const { email, password, guest_id } = req.body;
+    const result = await loginUser(email, password, guest_id);
     res.status(result.status).json(result);
   } catch (err) {
     console.error(err);
@@ -106,98 +88,72 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "User/assets"));
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({ storage });
-
 app.get("/api/is-logged-in", verifyToken, checkLoginStatus);
-app.put(
-  "/api/user/update",
-  upload.single("image"),
-  verifyToken,
-  updateUserProfile
-);
-
-app.post("/apply-discount", async (req, res) => {
-  const { code, cartTotal } = req.body;
-  const result = await applyDiscount(code, cartTotal);
-  res.json(result);
-});
-
-app.get("/api/discount_codes", fetchDiscount);
-app.post(
-  "/api/validate_discount_code/:code",
-  verifyToken,
-  validateDiscountCode
-);
+app.put("/api/user/update", verifyToken, upload.single("image"), updateUserProfile);
 app.put("/api/user/update-password", verifyToken, changePassword);
-app.post("/api/checkUserExists", checkUserExists);
+
+// ---- Address ----
 app.get("/api/getAddress", verifyToken, getAddress);
 app.post("/api/postAddress", verifyToken, postAddress);
 app.put("/api/editAddress/:id", verifyToken, editAddress);
 app.delete("/api/deleteAddress/:id", verifyToken, deleteAddress);
+
+// ---- Password Recovery ----
 app.post("/api/reset", RecoverAccount);
 app.put("/api/resetPassword", resetPassword);
 
-// Products
+// ---- Products ----
 app.get("/api/trends", trending);
-app.get("/api/search/:query", (req, res) =>
-  handleSearch(req, res, req.params.query)
-);
+app.get("/api/search/:query", (req, res) => handleSearch(req, res, req.params.query));
 app.get("/api/search", (req, res) => handleSearch(req, res, ""));
 app.get("/api/product/:id", product_by_id);
 app.get("/api/banners", getBanners);
 app.get("/api/orders", verifyToken, getOrdersByUser);
 app.get("/api/order/:orderId", verifyToken, getOrderDetails);
 
-// Testimonials
+// ---- Testimonials ----
 app.get("/api/testimonies", getTestimonies);
 app.post("/api/testimonies_post", postTestimony);
 
-// Activities & Stats
+// ---- Activities & Stats ----
 app.get("/api/recentActivities", verifyToken, getRecentactivities);
 app.get("/api/stats", getAllStats);
 
+// ---- Stations ----
 app.get("/api/stations", stations);
 
-// Newsletter
+// ---- Newsletter ----
 app.post("/api/subscribe", suscribe);
 
-// Cart
-app.get("/api/cart",verifyToken, getCart);
-app.delete("/api/cart/clear",verifyToken, verifyToken, clearCart);
-app.post("/api/cart/add",verifyToken, addToCart);
-app.put("/api/cart/update",verifyToken, updateCart);
-app.delete("/api/cart/remove",verifyToken, removeFromCart);
-app.get("/api/cart/has",verifyToken, hasInCart);
-app.post("/api/checkOut",verifyToken, verifyToken, checkOut);
+// ---- Cart ----
+app.get("/api/cart", verifyToken, getCart);
+app.delete("/api/cart/clear", verifyToken, clearCart);
+app.post("/api/cart/add", verifyToken, addToCart);
+app.put("/api/cart/update", verifyToken, updateCart);
+app.delete("/api/cart/remove", verifyToken, removeFromCart);
+app.get("/api/cart/has", verifyToken, hasInCart);
+app.post("/api/checkOut", verifyToken, checkOut);
 
-// // Example mail (testing purpose)
-// const testMail = await sendMail({
-//   to: ["chispecialshadrach@gmail.com", "shadrachchukwukerechinemerem@gmail.com"],
-//   subject: "Your OTP Code",
-//   text: "Your OTP is: 123456",
-//   html: "<p>Your OTP is: <b>123456</b></p>",
-// });
-
-app.get("/api/play", Functions);
-
-// guest
-
+// ---- Guest ----
 app.post("/api/guest/register-guest", register_guest);
-/* ===== Guest Cart Endpoints ===== */
-app.get("/api/guest/cart", getGuestCart); // fetch guest cart
-app.post("/api/guest/cart/add", addToGuestCart); // add item to guest cart
-app.delete("/api/guest/cart/remove", removeFromGuestCart); // remove item
-app.put("/api/guest/cart/update", updateGuestCart); // update quantity
+app.get("/api/guest/cart", getGuestCart);
+app.post("/api/guest/cart/add", addToGuestCart);
+app.delete("/api/guest/cart/remove", removeFromGuestCart);
+app.put("/api/guest/cart/update", updateGuestCart);
 app.get("/api/guest/cart/has", hasInGuestCart);
+
+// ---- Discount ----
+app.post("/apply-discount", async (req, res) => {
+  const { code, cartTotal } = req.body;
+  const result = await applyDiscount(code, cartTotal);
+  res.json(result);
+});
+app.get("/api/discount_codes", fetchDiscount);
+app.post("/api/validate_discount_code/:code", verifyToken, validateDiscountCode);
+
+// ---- Misc ----
+app.get("/api/play", Functions);
+app.post("/api/checkUserExists", checkUserExists);
 
 // ======================= Start Server =======================
 app.listen(PORT, "0.0.0.0", () => {
