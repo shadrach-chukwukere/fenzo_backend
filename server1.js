@@ -28,7 +28,8 @@ const verifyToken = (req, res, next) => {
   }
   const token = authHeader.split(" ")[1];
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: "Forbidden: Invalid token" });
+    if (err)
+      return res.status(403).json({ message: "Forbidden: Invalid token" });
     req.user = user;
     next();
   });
@@ -37,13 +38,17 @@ const verifyToken = (req, res, next) => {
 // ======================= Multer =======================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, "User/assets")),
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
+  filename: (req, file, cb) =>
+    cb(null, Date.now() + path.extname(file.originalname)),
 });
 const upload = multer({ storage });
 
 // ======================= Controllers =======================
 import { handleSearch, trending } from "./User/controller/search_product.js";
-import { getTestimonies, postTestimony } from "./User/controller/Testimonial.js";
+import {
+  getTestimonies,
+  postTestimony,
+} from "./User/controller/Testimonial.js";
 import { handleSignup } from "./User/controller/signup.js";
 import { getAllStats } from "./Admin/controller/total.js";
 import { RecoverAccount } from "./User/controller/Recovery.js";
@@ -60,18 +65,37 @@ import {
   updateGuestCart,
   hasInGuestCart,
 } from "./User/controller/guest.js";
-import { getAddress, postAddress, editAddress, deleteAddress } from "./User/controller/Address.js";
+import {
+  getAddress,
+  postAddress,
+  editAddress,
+  deleteAddress,
+} from "./User/controller/Address.js";
 import { loginUser } from "./User/controller/login.js";
 import { Functions } from "./play.js";
 import { checkLoginStatus } from "./User/controller/IsLoggedIn.js";
-import { updateUserProfile, changePassword } from "./User/controller/Profile.js";
+import {
+  updateUserProfile,
+  changePassword,
+} from "./User/controller/Profile.js";
 import { product_by_id } from "./User/controller/product_by_id.js";
 import { getRecentactivities } from "./User/controller/Activities.js";
 import { checkOut } from "./User/controller/checkOut.js";
 import { resetPassword } from "./User/controller/reset-password.js";
-import { getCart, clearCart, addToCart, updateCart, removeFromCart, hasInCart } from "./User/controller/cart.js";
+import {
+  getCart,
+  clearCart,
+  addToCart,
+  updateCart,
+  removeFromCart,
+  hasInCart,
+} from "./User/controller/cart.js";
 import { stations } from "./User/controller/stations.js";
-import { applyDiscount, fetchDiscount, validateDiscountCode } from "./User/controller/discount.js";
+import {
+  applyDiscount,
+  fetchDiscount,
+  validateDiscountCode,
+} from "./User/controller/discount.js";
 
 // ======================= Routes =======================
 
@@ -89,7 +113,12 @@ app.post("/api/login", async (req, res) => {
 });
 
 app.get("/api/is-logged-in", verifyToken, checkLoginStatus);
-app.put("/api/user/update", verifyToken, upload.single("image"), updateUserProfile);
+app.put(
+  "/api/user/update",
+  verifyToken,
+  upload.single("image"),
+  updateUserProfile
+);
 app.put("/api/user/update-password", verifyToken, changePassword);
 
 // ---- Address ----
@@ -104,7 +133,9 @@ app.put("/api/resetPassword", resetPassword);
 
 // ---- Products ----
 app.get("/api/trends", trending);
-app.get("/api/search/:query", (req, res) => handleSearch(req, res, req.params.query));
+app.get("/api/search/:query", (req, res) =>
+  handleSearch(req, res, req.params.query)
+);
 app.get("/api/search", (req, res) => handleSearch(req, res, ""));
 app.get("/api/product/:id", product_by_id);
 app.get("/api/banners", getBanners);
@@ -149,11 +180,43 @@ app.post("/apply-discount", async (req, res) => {
   res.json(result);
 });
 app.get("/api/discount_codes", fetchDiscount);
-app.post("/api/validate_discount_code/:code", verifyToken, validateDiscountCode);
+app.post(
+  "/api/validate_discount_code/:code",
+  verifyToken,
+  validateDiscountCode
+);
 
 // ---- Misc ----
 app.get("/api/play", Functions);
 app.post("/api/checkUserExists", checkUserExists);
+
+app.get("/events", (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+
+  const interval = setInterval(() => {
+    const data = {
+      image: "/assets/pic1.webp",
+      title: "One Title",
+      message: "Shop on FENZO MARKET",
+      actions: true,
+      lead: [
+        {
+          label: "Shop Now",
+          url: "http://localhost:5173/",
+          icon: "/assets/icon.svg",
+        },
+      ],
+    };
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  }, 1000000000);
+
+  req.on("close", () => {
+    clearInterval(interval);
+    console.log("❌ Client disconnected");
+  });
+});
 
 // ======================= Start Server =======================
 app.listen(PORT, "0.0.0.0", () => {

@@ -3,7 +3,7 @@ import { db } from "../../db.js";
 export const register_guest = async (req, res) => {
   try {
     // generate unique guest id
-    const guestId = crypto.randomUUID();
+     
 
     // save in DB
     await db.query("INSERT INTO guest (id) VALUES (?)", [guestId]);

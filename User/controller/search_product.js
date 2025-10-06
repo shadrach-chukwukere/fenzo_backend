@@ -120,7 +120,7 @@ export async function handleSearch(req, res, rawQuery = "") {
     }
 
     const priceSql = `SELECT MIN(T.price) AS min_price, MAX(T.price) AS max_price FROM ${baseSql} AS T`;
-    const productSql = `SELECT * FROM ${baseSql} AS T ORDER BY RAND() LIMIT 50`;
+    const productSql = `SELECT title , id , img1,stock,price FROM ${baseSql} AS T ORDER BY RAND() LIMIT 50`;
 
     const [priceRows] = await db.execute(priceSql, finalValues);
     const [productRows] = await db.execute(productSql, finalValues);
@@ -141,7 +141,7 @@ export const trending = async (req, res) => {
   try {
     const minRank = parseInt(req.query.rank, 10) || 3;
     const [products] = await db.query(
-      `SELECT * FROM products WHERE rank > ? ORDER BY RAND() LIMIT 10`,
+      `SELECT title , id , img1,stock,price FROM products WHERE rank > ? ORDER BY RAND() LIMIT 10`,
       [minRank]
     );
     res.status(200).json({ success: true, data: products });
