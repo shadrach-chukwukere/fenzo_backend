@@ -96,6 +96,7 @@ import {
   fetchDiscount,
   validateDiscountCode,
 } from "./User/controller/discount.js";
+import { getChallenge, registerCred } from "./User/controller/Cred.js";
 
 // ======================= Routes =======================
 
@@ -217,6 +218,9 @@ app.get("/events", (req, res) => {
     console.log("❌ Client disconnected");
   });
 });
+
+app.post("/api/challenge", getChallenge);
+app.post("/api/credReg", registerCred);
 
 // ======================= Start Server =======================
 app.listen(PORT, "0.0.0.0", () => {

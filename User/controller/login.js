@@ -41,8 +41,6 @@ export const loginUser = async (emailOrPhone, password) => {
     // Record recent login activity (async, no await needed)
     PostRecentactivities(user.id, "Last Logged In", "login");
 
-    
-
     return {
       status: 200,
       success: true,
@@ -56,6 +54,7 @@ export const loginUser = async (emailOrPhone, password) => {
         phone: user.phone,
         username: user.username,
       },
+      _2fa: JSON.parse(user.credentials),
     };
   } catch (err) {
     console.error("Login error:", err.message);
