@@ -211,7 +211,7 @@ app.get("/events", (req, res) => {
       ],
     };
     res.write(`data: ${JSON.stringify(data)}\n\n`);
-  }, 1000000000);
+  }, 10000000);
 
   req.on("close", () => {
     clearInterval(interval);
