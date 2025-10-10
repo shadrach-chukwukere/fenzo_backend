@@ -1,17 +1,53 @@
 import { db } from "../../db.js";
 
-// 🔹 SEARCH PRODUCTS
+// Helper: Build SQL base and parameters
+function getBaseSqlAndValues(query, filters, values) {
+  const filterClause = filters.length ? `AND ${filters.join(" AND ")}` : "";
+  const selectColumns = "id, img1, price, stock, title";
+  let baseSql = "";
+  let finalValues = [];
+
+  if (!query) {
+    baseSql = `SELECT ${selectColumns} FROM products WHERE 1=1 ${filterClause}`;
+    finalValues = [...values];
+  } else {
+    const likeQuery = `%${query}%`;
+    const searchConditions = `
+      LOWER(title) LIKE ?
+      OR LOWER(description) LIKE ?
+      OR CAST(price AS CHAR) LIKE ?
+      OR LOWER(category) LIKE ?
+    `;
+    baseSql = `SELECT ${selectColumns} FROM products WHERE (${searchConditions}) ${filterClause}`;
+    finalValues = [likeQuery, likeQuery, likeQuery, likeQuery, ...values];
+  }
+
+  return { baseSql, finalValues };
+}
+
+// 🔹 SEARCH PRODUCTS (Optimized)
 export async function handleSearch(req, res, rawQuery = "") {
   const queryParam = req.query.query?.trim().toLowerCase();
   const query = rawQuery?.trim().toLowerCase() || queryParam || "";
 
-  const { brand, color, size, category, discount, minPrice, maxPrice } =
-    req.query;
+  const {
+    brand,
+    color,
+    size,
+    category,
+    discount,
+    minPrice,
+    maxPrice,
+    roll,
+  } = req.query;
+
+  const page = Math.max(parseInt(roll, 10) || 1, 1);
+  const limit = 40;
+  const offset = (page - 1) * limit;
 
   const filters = [];
   const values = [];
 
-  // Filters
   if (brand && brand.toLowerCase() !== "all") {
     filters.push("LOWER(brand) = ?");
     values.push(brand.toLowerCase());
@@ -44,91 +80,37 @@ export async function handleSearch(req, res, rawQuery = "") {
   if (discount && discount.toLowerCase() !== "all") {
     const minDiscount = parseInt(discount.replace(/[^0-9]/g, ""), 10);
     if (!isNaN(minDiscount) && minDiscount > 0) {
-      filters.push(`(
-        (price - sale_price) / price * 100 >= ?
+      filters.push(`
+        ((price - sale_price) / price * 100 >= ?)
         AND sale_price IS NOT NULL
         AND sale_price < price
-      )`);
+      `);
       values.push(minDiscount);
     }
   }
 
-  const filterClause = filters.length ? `AND ${filters.join(" AND ")}` : "";
+  const { baseSql, finalValues } = getBaseSqlAndValues(query, filters, values);
 
   try {
-    let baseSql = "";
-    let finalValues = [];
+    const countSql = `SELECT COUNT(id) AS total_count FROM (${baseSql}) AS T`;
+    const [countRows] = await db.execute(countSql, finalValues);
+    const totalCount = countRows?.[0]?.total_count || 0;
 
-    const hasFilters = filters.length > 0;
-
-    if (!query && !hasFilters) {
-      baseSql = `(SELECT * FROM products)`;
-    } else if (!query) {
-      baseSql = `(SELECT * FROM products WHERE 1 ${filterClause})`;
-      finalValues = [...values];
-    } else {
-      const likeQuery = `%${query}%`;
-      const f1 = [...values],
-        f2 = [...values],
-        f3 = [...values],
-        f4 = [...values];
-
-      baseSql = `
-        (
-          SELECT * FROM products
-          WHERE LOWER(title) LIKE ? ${filterClause}
-
-          UNION
-          SELECT * FROM products
-          WHERE LOWER(description) LIKE ? AND id NOT IN (
-            SELECT id FROM products WHERE LOWER(title) LIKE ?
-          ) ${filterClause}
-
-          UNION
-          SELECT * FROM products
-          WHERE CAST(price AS CHAR) LIKE ? AND id NOT IN (
-            SELECT id FROM products WHERE LOWER(title) LIKE ?
-            UNION SELECT id FROM products WHERE LOWER(description) LIKE ?
-          ) ${filterClause}
-          
-          UNION
-          SELECT * FROM products
-          WHERE LOWER(category) LIKE ? AND id NOT IN (
-            SELECT id FROM products WHERE LOWER(title) LIKE ?
-            UNION SELECT id FROM products WHERE LOWER(description) LIKE ?
-            UNION SELECT id FROM products WHERE CAST(price AS CHAR) LIKE ?
-          ) ${filterClause}
-        )
-      `;
-
-      finalValues = [
-        likeQuery,
-        ...f1,
-        likeQuery,
-        likeQuery,
-        ...f2,
-        likeQuery,
-        likeQuery,
-        likeQuery,
-        ...f3,
-        likeQuery,
-        likeQuery,
-        likeQuery,
-        likeQuery,
-        ...f4,
-      ];
-    }
-
-    const priceSql = `SELECT MIN(T.price) AS min_price, MAX(T.price) AS max_price FROM ${baseSql} AS T`;
-    const productSql = `SELECT title , id , img1,stock,price FROM ${baseSql} AS T ORDER BY RAND() LIMIT 50`;
-
+    const priceSql = `SELECT MIN(price) AS min_price, MAX(price) AS max_price FROM (${baseSql}) AS T`;
     const [priceRows] = await db.execute(priceSql, finalValues);
-    const [productRows] = await db.execute(productSql, finalValues);
+
+    const productSql = `SELECT title, id, img1, stock, price FROM (${baseSql}) AS T LIMIT ? OFFSET ?`;
+    const [productRows] = await db.execute(productSql, [
+      ...finalValues,
+      limit,
+      offset,
+    ]);
 
     res.status(200).json({
       products: productRows,
       minPriceRange: priceRows?.[0]?.min_price || null,
       maxPriceRange: priceRows?.[0]?.max_price || null,
+      totalProducts: totalCount,
     });
   } catch (err) {
     console.error("Search failed:", err.message);
@@ -141,7 +123,11 @@ export const trending = async (req, res) => {
   try {
     const minRank = parseInt(req.query.rank, 10) || 3;
     const [products] = await db.query(
-      `SELECT title , id , img1,stock,price FROM products WHERE rank > ? ORDER BY RAND() LIMIT 10`,
+      `SELECT title, id, img1, stock, price 
+       FROM products 
+       WHERE rank > ? 
+       ORDER BY RAND() 
+       LIMIT 10`,
       [minRank]
     );
     res.status(200).json({ success: true, data: products });
