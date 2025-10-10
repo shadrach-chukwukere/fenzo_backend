@@ -3,7 +3,8 @@ import { db } from "../../db.js";
 // Helper: Build SQL base and parameters
 function getBaseSqlAndValues(query, filters, values) {
   const filterClause = filters.length ? `AND ${filters.join(" AND ")}` : "";
-  const selectColumns = "id, img1, price, stock, title";
+  // Columns defined for selection in the base query (must exist in DB)
+  const selectColumns = "id, img1, price, stock, title"; 
   let baseSql = "";
   let finalValues = [];
 
@@ -30,16 +31,8 @@ export async function handleSearch(req, res, rawQuery = "") {
   const queryParam = req.query.query?.trim().toLowerCase();
   const query = rawQuery?.trim().toLowerCase() || queryParam || "";
 
-  const {
-    brand,
-    color,
-    size,
-    category,
-    discount,
-    minPrice,
-    maxPrice,
-    roll,
-  } = req.query;
+  const { brand, color, size, category, discount, minPrice, maxPrice, roll } =
+    req.query;
 
   const page = Math.max(parseInt(roll, 10) || 1, 1);
   const limit = 40;
@@ -99,7 +92,9 @@ export async function handleSearch(req, res, rawQuery = "") {
     const priceSql = `SELECT MIN(price) AS min_price, MAX(price) AS max_price FROM (${baseSql}) AS T`;
     const [priceRows] = await db.execute(priceSql, finalValues);
 
-    const productSql = `SELECT title, id, img1, stock, price FROM (${baseSql}) AS T LIMIT ? OFFSET ?`;
+    // FIX 1: Selecting columns from a subquery (T) must match the columns in the subquery.
+    // Removed img3 as it's not in the base query's SELECT.
+    const productSql = `SELECT id, img1, price, stock, title FROM (${baseSql}) AS T LIMIT ? OFFSET ?`;
     const [productRows] = await db.execute(productSql, [
       ...finalValues,
       limit,
@@ -123,11 +118,12 @@ export const trending = async (req, res) => {
   try {
     const minRank = parseInt(req.query.rank, 10) || 3;
     const [products] = await db.query(
-      `SELECT title, id, img1, stock, price 
-       FROM products 
-       WHERE rank > ? 
-       ORDER BY RAND() 
-       LIMIT 10`,
+      // FIX 2: Removed img3 from the direct SELECT statement.
+      `SELECT title, id, img1, stock, price , img3
+        FROM products 
+        WHERE rank > ? 
+        ORDER BY RAND() 
+        LIMIT 10`,
       [minRank]
     );
     res.status(200).json({ success: true, data: products });
